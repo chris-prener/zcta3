@@ -32,7 +32,8 @@ create_data <- function(year){
 
 }
 
-create_data(year = 2020)
+# create_data(year = 2020)
 # create_data(year = 2021)
 
 # create_data(year = 2010)
+create_data(year = 2012)
