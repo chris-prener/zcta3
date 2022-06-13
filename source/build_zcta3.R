@@ -1,24 +1,38 @@
 library(dplyr)
 library(sf)
 
-zcta <- tigris::zctas(year = 2020)
+create_data <- function(year){
 
-zcta %>%
-  mutate(ZCTA3 = substr(GEOID20, 1, 3)) %>%
-  select(ZCTA3) %>%
-  group_by(ZCTA3) %>%
-  summarise() -> zcta
+  ## switch year if necessary
+  if (year == 2011){
+    year <- 2010
+  }
 
-zcta <- sf::st_simplify(zcta, preserveTopology = TRUE, dTolerance = 20)
+  ## download geometry
+  out <- tigris::zctas(year = year)
 
-st_write(zcta, dsn = "data-raw/zcta_2020.geojson", delete_dsn = TRUE)
+  ## rename ZCTA3
+  if (year >= 2020){
+    out <- mutate(out, ZCTA3 = substr(GEOID20, 1, 3))
+  } else if (year < 2020){
+    out <- mutate(out, ZCTA3 = substr(GEOID10, 1, 3))
+  }
 
-zcta <- tigris::zctas(year = 2021)
+  ## geoprocess - dissolve
+  out %>%
+    select(ZCTA3) %>%
+    group_by(ZCTA3) %>%
+    summarise() -> out
 
-zcta %>%
-  mutate(ZCTA3 = substr(GEOID20, 1, 3)) %>%
-  select(ZCTA3) %>%
-  group_by(ZCTA3) %>%
-  summarise() -> zcta
+  ## geoprocess - simplify
+  out <- sf::st_simplify(out, preserveTopology = TRUE, dTolerance = 20)
 
-zcta <- sf::st_simplify(zcta, preserveTopology = TRUE, dTolerance = 20)
+  ## write data
+  sf::st_write(out, dsn = paste0("data/zcta3_", year, ".geojson"), delete_dsn = TRUE)
+
+}
+
+# create_data(year = 2020)
+# create_data(year = 2021)
+
+create_data(year = 2010)
